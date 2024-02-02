@@ -17,7 +17,7 @@ getRandomAnswer((answer) => {
   // NOTE : If you use Live Preview, the focus line ☝️ can get annoying because
   //       it will keep focusing the input field every time you edit the file.
   //       You can comment it out.
-  console.log(correctAnswer);
+  // console.log(correctAnswer);
 });
 
 // TODO: Fill in your code here
