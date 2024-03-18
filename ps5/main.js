@@ -165,20 +165,22 @@ function drawBoard() {
 
       peg.setAttribute(
         "fill",
-        chroma.scale(['#D3D3D3', BALL_COLOR, "black"])(hitRatio).hex()
+        chroma.scale(["#D3D3D3", BALL_COLOR, "black"])(hitRatio).hex()
       );
     }
 
     const finalColHitCount = hitCounts[NUM_LEVELS - 1][col]; // The hit count for the final column
     const barIndex = Math.floor(col / 2); // The index of the bar that corresponds to the final column (since there are 2 pegs per bar)
-    const newBarHeight = (BAR_SCALE_FACTOR * finalColHitCount) / parseInt(numBallsInput.value); // The new height of the bar
+    const newBarHeight =
+      (BAR_SCALE_FACTOR * finalColHitCount) / parseInt(numBallsInput.value); // The new height of the bar
     const animationDuration = DELAY_WHEN_DROP / parseFloat(speedInput.value);
 
     // Perform animations simultaneously
     await Promise.all([
       changeHeightTo(actualBars[barIndex], newBarHeight, animationDuration),
-      animateBallDownward(circle, animationDuration),
-      animateBallOpacity(circle, animationDuration),
+      pause(1000),
+      animateBall(circle, animationDuration),
+      pause(1000),
     ]);
     circle.remove(); // Remove the circle from the SVG element
   }
@@ -229,68 +231,73 @@ function drawBoard() {
   return cleanup; // Return the cleanup function
 }
 
-// Animates the height of a rectangle from its current height to a new height
+// HAD TO USE CHATGPT FOR ANIMATIONS
 async function changeHeightTo(rect, toHeight, duration) {
-  return new Promise((resolve) => {
-    const startHeight = parseFloat(rect.getAttribute("height"));
-    const distanceHeight = toHeight - startHeight;
-
-    const startTime = performance.now();
-
-    function animate(time) {
-      const elapsedTime = time - startTime;
-      const progress = Math.min(elapsedTime / duration, 1); // Ensure progress is [0, 1]
-      const easedProgress = easeInQuad(progress); // Apply easing function
-
-      const newHeight = startHeight + distanceHeight * easedProgress;
-
-      rect.setAttribute("height", newHeight);
-
-      if (progress < 1) {
-        requestAnimationFrame(animate); // Continue the animation
+  const fromHeight = parseFloat(rect.getAttribute("height"));
+  const animationStarted = Date.now();
+  return new Promise(async (resolve) => {
+    function step() {
+      const pct = (Date.now() - animationStarted) / duration;
+      const pos = easeInQuad(pct);
+      const value = fromHeight + (toHeight - fromHeight) * pos;
+      rect.setAttribute("height", value);
+      if (pct < 1) {
+        requestAnimationFrame(step);
       } else {
-        resolve(); // Finish the animation
+        resolve();
       }
     }
-
-    requestAnimationFrame(animate);
+    step();
+    await pause(2000);
   });
 }
 
-
-
-async function moveCircleTo(circle, targetX, targetY, duration) {
-  return new Promise((resolve) => {
-    const startX = parseFloat(circle.getAttribute("cx"));
-    const startY = parseFloat(circle.getAttribute("cy"));
-    const distanceX = targetX - startX;
-    const distanceY = targetY - startY;
-
-    const startTime = performance.now();
-
-    function animate(time) {
-      const elapsedTime = time - startTime;
-      const progress = Math.min(elapsedTime / duration, 1); // Ensure progress is [0, 1]
-      const easedProgress = easeOutQuad(progress); // Apply easing function
-
-      const newX = startX + distanceX * easedProgress;
-      const newY = startY + distanceY * easedProgress;
-
-      circle.setAttribute("cx", newX);
-      circle.setAttribute("cy", newY);
-
-      if (progress < 1) {
-        requestAnimationFrame(animate); // Continue the animation
+async function moveCircleTo(circle, cx, cy, duration) {
+  const fromX = parseFloat(circle.getAttribute("cx"));
+  const fromY = parseFloat(circle.getAttribute("cy"));
+  const animationStarted = Date.now();
+  return new Promise(async (resolve) => {
+    function step() {
+      const pct = (Date.now() - animationStarted) / duration;
+      const pos = easeOutQuad(pct);
+      const valueX = fromX + (cx - fromX) * pos;
+      const valueY = fromY + (cy - fromY) * pos;
+      circle.setAttribute("cx", valueX);
+      circle.setAttribute("cy", valueY);
+      if (pct < 1) {
+        requestAnimationFrame(step);
       } else {
-        resolve(); // Finish the animation
+        resolve();
       }
     }
-
-    requestAnimationFrame(animate);
+    step();
+    await pause(2000);
   });
 }
 
-//Animates last pos
+async function animateBall(circle, duration) {
+  const initial = parseFloat(circle.getAttribute("cy"));
+  const ope = parseFloat(circle.getAttribute("opacity"));
+  const final = initial + 20;
+  const animationStarted = Date.now();
+  return new Promise(async (resolve) => {
+    function step() {
+      const pct = (Date.now() - animationStarted) / duration;
+      const pos = easeOutQuad(pct);
+      const newPosition = initial + (final - initial) * pos;
+      const newOpacity = ope - pct * ope;
+      circle.setAttribute("cy", newPosition);
+      circle.setAttribute("opacity", newOpacity);
+      if (pct < 1) {
+        requestAnimationFrame(step);
+      } else {
+        resolve();
+      }
+    }
+    step();
+    await pause(2000);
+  });
+}
 
 /**
  * Translates a column and row into a pixel location
@@ -388,29 +395,6 @@ function easeOutQuad(t) {
 
 function easeInQuad(t) {
   return t * t;
-}
-
-async function animateBallDownward(circle, col, row, duration) {
-  const { x, y } = getGraphicLocation(col, row); // Get the coordinates of the last position
-  const startY = parseFloat(circle.getAttribute("cy"));
-  const targetY = y; // Move the ball to the Y coordinate of the last position
-
-  await new Promise((resolve) => {
-    circle.animate([{ cy: startY + "px" }, { cy: targetY + "px" }], {
-      duration: duration,
-      easing: "easeOutQuad",
-      fill: "forwards",
-    }).onfinish = resolve;
-  });
-}
-
-async function animateBallOpacity(circle, duration) {
-  await new Promise((resolve) => {
-    circle.animate([{ opacity: 0.9 }, { opacity: 0 }], {
-      duration: duration,
-      fill: "forwards",
-    }).onfinish = resolve;
-  });
 }
 
 speedInput.addEventListener("input", () => {
