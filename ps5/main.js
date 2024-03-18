@@ -176,12 +176,19 @@ function drawBoard() {
     const barIndex = Math.floor(col / 2); // The index of the bar that corresponds to the final column (since there are 2 pegs per bar)
     const newBarHeight =
       (BAR_SCALE_FACTOR * finalColHitCount) / parseInt(numBallsInput.value); // The new height of the bar
-    await changeHeightTo(
-      actualBars[barIndex],
-      newBarHeight,
-      DELAY_WHEN_DROP / parseFloat(speedInput.value)
-    ); // Animate the change in height of the bar
+    // await changeHeightTo(
+    //   actualBars[barIndex],
+    //   newBarHeight,
+    //   DELAY_WHEN_DROP / parseFloat(speedInput.value)
+    // ); // Animate the change in height of the bar
+    const animationDuration = DELAY_WHEN_DROP / parseFloat(speedInput.value);
 
+    // Perform animations simultaneously
+    await Promise.all([
+      changeHeightTo(actualBars[barIndex], newBarHeight, animationDuration),
+      animateBallDownward(circle, animationDuration),
+      animateBallOpacity(circle, animationDuration),
+    ]);
     circle.remove(); // Remove the circle from the SVG element
   }
 
@@ -237,11 +244,36 @@ async function changeHeightTo(rect, toHeight, duration) {
   rect.setAttribute("height", toHeight);
 }
 
-// Animates the movement of a circle to a new location
-async function moveCircleTo(circle, cx, cy, duration) {
-  await pause(duration);
-  circle.setAttribute("cx", cx);
-  circle.setAttribute("cy", cy);
+// Animates the movement of a circle to a new location used chat to fix this
+async function moveCircleTo(circle, targetX, targetY, duration) {
+  return new Promise((resolve) => {
+    const startX = parseFloat(circle.getAttribute("cx"));
+    const startY = parseFloat(circle.getAttribute("cy"));
+    const distanceX = targetX - startX;
+    const distanceY = targetY - startY;
+
+    const startTime = performance.now();
+
+    function animate(time) {
+      const elapsedTime = time - startTime;
+      const progress = Math.min(elapsedTime / duration, 1); // Ensure progress is [0, 1]
+      const easedProgress = easeOutQuad(progress); // Apply easing function
+
+      const newX = startX + distanceX * easedProgress;
+      const newY = startY + distanceY * easedProgress;
+
+      circle.setAttribute("cx", newX);
+      circle.setAttribute("cy", newY);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate); // Continue the animation
+      } else {
+        resolve(); // Finish the animation
+      }
+    }
+
+    requestAnimationFrame(animate);
+  });
 }
 
 //Animates last pos
@@ -343,3 +375,34 @@ function easeOutQuad(t) {
 function easeInQuad(t) {
   return t * t;
 }
+
+async function animateBallDownward(circle, duration) {
+  const startY = parseFloat(circle.getAttribute("cy"));
+  const targetY = startY + 20; // Move the ball downward by 20 pixels
+
+  await new Promise((resolve) => {
+    circle.animate([{ cy: startY + "px" }, { cy: targetY + "px" }], {
+      duration: duration,
+      easing: "easeOutQuad",
+      fill: "forwards",
+    }).onfinish = resolve;
+  });
+}
+
+async function animateBallOpacity(circle, duration) {
+  await new Promise((resolve) => {
+    circle.animate([{ opacity: 0.9 }, { opacity: 0 }], {
+      duration: duration,
+      fill: "forwards",
+    }).onfinish = resolve;
+  });
+}
+
+speedInput.addEventListener("input", () => {
+  // Update the animation speed when the slider value changes
+  const newSpeed = parseFloat(speedInput.value);
+
+  // Update animation durations for ball movement between pegs and delay when drop
+  DELAY_BETWEEN_PEGS = 1000 / newSpeed;
+  DELAY_WHEN_DROP = 1000 / newSpeed;
+});
