@@ -119,11 +119,9 @@ function drawBoard() {
     let col = NUM_LEVELS - 1; // Start in the middle column
 
     const { x, y } = getGraphicLocation(col, row);
-    const circleColor = chroma
-      .random()
-      .darken(2 * Math.random() - 1)
-      .saturate(2 * Math.random() - 1)
-      .hex();
+    const circleColor = chroma(BALL_COLOR)
+      .darken((2 * Math.random() - 1) * 2)
+      .saturate((2 * Math.random() - 1) * 2);
     const circle = createCircle(
       x,
       y,
@@ -140,7 +138,7 @@ function drawBoard() {
     //   BALL_COLOR,
     //   svgElement
     // ); // Create a new circle at the top of the board
-    circle.setAttribute("opacity", 0.9); // Make the circle slightly transparent (so we can see the pegs it passes through)
+    circle.setAttribute("opacity", 0.8); // Make the circle slightly transparent (so we can see the pegs it passes through)
 
     // Drop the ball down the board by looping down the rows and randomly choosing left or right
     for (let i = 0; i < NUM_LEVELS - 1; i++) {
@@ -164,23 +162,16 @@ function drawBoard() {
       const peg = pegs[row][col]; // The peg that the ball hit
       hitCounts[row][col]++; // Increment the hit count for this peg
       const hitRatio = hitCounts[row][col] / parseInt(numBallsInput.value);
-      const pegColor = chroma
-        .scale(["white", "red"])
-        .mode("lch")
-        .domain([0, 1])(hitRatio)
-        .hex();
-      peg.setAttribute("fill", pegColor);
+
+      peg.setAttribute(
+        "fill",
+        chroma.scale(['#D3D3D3', BALL_COLOR, "black"])(hitRatio).hex()
+      );
     }
 
     const finalColHitCount = hitCounts[NUM_LEVELS - 1][col]; // The hit count for the final column
     const barIndex = Math.floor(col / 2); // The index of the bar that corresponds to the final column (since there are 2 pegs per bar)
-    const newBarHeight =
-      (BAR_SCALE_FACTOR * finalColHitCount) / parseInt(numBallsInput.value); // The new height of the bar
-    // await changeHeightTo(
-    //   actualBars[barIndex],
-    //   newBarHeight,
-    //   DELAY_WHEN_DROP / parseFloat(speedInput.value)
-    // ); // Animate the change in height of the bar
+    const newBarHeight = (BAR_SCALE_FACTOR * finalColHitCount) / parseInt(numBallsInput.value); // The new height of the bar
     const animationDuration = DELAY_WHEN_DROP / parseFloat(speedInput.value);
 
     // Perform animations simultaneously
@@ -240,11 +231,34 @@ function drawBoard() {
 
 // Animates the height of a rectangle from its current height to a new height
 async function changeHeightTo(rect, toHeight, duration) {
-  await pause(duration);
-  rect.setAttribute("height", toHeight);
+  return new Promise((resolve) => {
+    const startHeight = parseFloat(rect.getAttribute("height"));
+    const distanceHeight = toHeight - startHeight;
+
+    const startTime = performance.now();
+
+    function animate(time) {
+      const elapsedTime = time - startTime;
+      const progress = Math.min(elapsedTime / duration, 1); // Ensure progress is [0, 1]
+      const easedProgress = easeInQuad(progress); // Apply easing function
+
+      const newHeight = startHeight + distanceHeight * easedProgress;
+
+      rect.setAttribute("height", newHeight);
+
+      if (progress < 1) {
+        requestAnimationFrame(animate); // Continue the animation
+      } else {
+        resolve(); // Finish the animation
+      }
+    }
+
+    requestAnimationFrame(animate);
+  });
 }
 
-// Animates the movement of a circle to a new location used chat to fix this
+
+
 async function moveCircleTo(circle, targetX, targetY, duration) {
   return new Promise((resolve) => {
     const startX = parseFloat(circle.getAttribute("cx"));
@@ -376,9 +390,10 @@ function easeInQuad(t) {
   return t * t;
 }
 
-async function animateBallDownward(circle, duration) {
+async function animateBallDownward(circle, col, row, duration) {
+  const { x, y } = getGraphicLocation(col, row); // Get the coordinates of the last position
   const startY = parseFloat(circle.getAttribute("cy"));
-  const targetY = startY + 20; // Move the ball downward by 20 pixels
+  const targetY = y; // Move the ball to the Y coordinate of the last position
 
   await new Promise((resolve) => {
     circle.animate([{ cy: startY + "px" }, { cy: targetY + "px" }], {
