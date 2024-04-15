@@ -31,15 +31,6 @@ function App() {
     setShowingFeedback(false);
   }, []);
 
-  const onKeyDown = React.useCallback(
-    (e) => {
-      if (e.key === "Enter") {
-        doGuess();
-      }
-    },
-    [doGuess]
-  );
-
   return (
     <div className="App">
       <label id="cheating-mode">

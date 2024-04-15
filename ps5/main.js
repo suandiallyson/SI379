@@ -119,9 +119,7 @@ function drawBoard() {
     let col = NUM_LEVELS - 1; // Start in the middle column
 
     const { x, y } = getGraphicLocation(col, row);
-    const circleColor = chroma(BALL_COLOR)
-      .darken((2 * Math.random() - 1) * 2)
-      .saturate((2 * Math.random() - 1) * 2);
+    const circleColor = chroma(BALL_COLOR).darken((2 * Math.random() - 1) * 2).saturate((2 * Math.random() - 1) * 2);
     const circle = createCircle(
       x,
       y,
@@ -163,10 +161,7 @@ function drawBoard() {
       hitCounts[row][col]++; // Increment the hit count for this peg
       const hitRatio = hitCounts[row][col] / parseInt(numBallsInput.value);
 
-      peg.setAttribute(
-        "fill",
-        chroma.scale(["#D3D3D3", BALL_COLOR, "black"])(hitRatio).hex()
-      );
+      peg.setAttribute("fill", chroma.scale(["#D3D3D3", BALL_COLOR, "black"])(hitRatio).hex());
     }
 
     const finalColHitCount = hitCounts[NUM_LEVELS - 1][col]; // The hit count for the final column
@@ -248,7 +243,7 @@ async function changeHeightTo(rect, toHeight, duration) {
       }
     }
     step();
-    await pause(2000);
+    await pause(duration);
   });
 }
 
@@ -271,7 +266,7 @@ async function moveCircleTo(circle, cx, cy, duration) {
       }
     }
     step();
-    await pause(2000);
+    await pause(duration);
   });
 }
 
@@ -295,7 +290,7 @@ async function animateBall(circle, duration) {
       }
     }
     step();
-    await pause(2000);
+    await pause(duration);
   });
 }
 
