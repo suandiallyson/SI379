@@ -1,3 +1,3 @@
 module.exports = {
-  publicPath: "/SI379/",
+  publicPath: "/SI379/cooking-mama/",
 };
