@@ -10,9 +10,17 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+function buildRecipeQuery(searchQuery, dietaryRestrictions, dietTypes, excludedIngredients) {
+  return {
+    query: searchQuery,
+    intolerances: dietaryRestrictions.join(","), // Comma-separated list of intolerances
+    diet: dietTypes.join(","), // Comma-separated list of diet types
+    excludeIngredients: excludedIngredients.join(","), // Comma-separated list of ingredients to exclude
+    instructionsRequired: true, // Whether to require instructions
+  };
+}
 
 function queryRecipes(query) {
-  console.log(query);
   return apiClient
     .get('/recipes/complexSearch', {
       params: {
@@ -46,70 +54,8 @@ function getRecipeInformation(recipeId, includeNutrition = false) {
     });
 }
 
-// Build the query object for the API
-function buildRecipeQuery(searchQuery, dietaryRestrictions, dietTypes, excludedIngredients) {
-  return {
-    query: searchQuery,
-    intolerances: dietaryRestrictions.join(','), // Comma-separated list of intolerances
-    diet: dietTypes.join(','), // Comma-separated list of diet types
-    excludeIngredients: excludedIngredients.join(','), // Comma-separated list of ingredients to exclude
-    instructionsRequired: true, // Whether to require instructions
-  };
-}
 // Ensure both functions are exported
 export { buildRecipeQuery, queryRecipes, getRecipeInformation };
-
-
-// import axios from 'axios';
-
-// // Base URL for the Spoonacular API
-// const BASE_URL = 'https://api.spoonacular.com';
-
-// // Your API key for authenticating with the Spoonacular API
-// const API_KEY = '6d3344bdcc68402d8574517fcf922596'; // Replace with your actual API key
-
-// // Create an Axios instance with the base configuration
-// const apiClient = axios.create({
-//   baseURL: BASE_URL,
-//   headers: {
-//     Accept: 'application/json',
-//     'Content-Type': 'application/json',
-//   },
-// });
-
-
-// // Function to send the query to the Spoonacular API with error handling
-// function queryRecipes(query) {
-//   return apiClient
-//     .get('/recipes/complexSearch', {
-//       params: {
-//         ...query,
-//         apiKey: API_KEY, // Include the API key in the request
-//       },
-//     })
-//     .catch((error) => {
-//       console.error('Error querying recipes:', error); // Log the error
-//       throw error; // Re-throw the error to be handled by the calling code
-//     });
-// }
-
-// // Function to get detailed recipe information with error handling
-// function getRecipeInformation(recipeId, includeNutrition = false) {
-//   return apiClient
-//     .get(`/recipes/${recipeId}/information`, {
-//       params: {
-//         apiKey: API_KEY, // Include the API key
-//         includeNutrition, // Whether to include nutrition data
-//       },
-//     })
-//     .catch((error) => {
-//       console.error('Error getting recipe information:', error); // Log the error
-//       throw error; // Re-throw the error to be handled by the calling code
-//     });
-// }
-
-// // Export the functions to use them in other components
-// export { buildRecipeQuery, queryRecipes, getRecipeInformation };
 
 // import axios from 'axios';
 

@@ -5,8 +5,8 @@ import axios from 'axios'; // For HTTP requests
 
 export default {
   props: {
-    // Ensure recipeId is a required prop
-    recipeId: {
+    // Ensure recipeId is a required pr op
+    id: {
       type: Number,
       required: true
     },
@@ -27,10 +27,10 @@ export default {
       try {
         const response = await axios.get(
           // Use the recipeId prop to construct the URL
-          `https://api.spoonacular.com/recipes/${this.recipeId}/analyzedInstructions`,
+          `https://api.spoonacular.com/recipes/${this.id}/analyzedInstructions`,
           {
             params: {
-              apiKey: '8e28d489ddfd44a7af1137b5ca53fc61', // Use your Spoonacular API key
+              apiKey: 'bc0d5142901d4417947e4b47118887a3', // Use your Spoonacular API key
               stepBreakdown: true, // Get detailed step breakdown
             },
           }

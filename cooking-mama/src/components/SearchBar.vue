@@ -19,6 +19,7 @@ export default {
   },
   methods: {
     search() {
+      console.log("Searching...");
       this.$emit('search', this.searchQuery); // Emit the search event with the query
     },
   },
@@ -30,7 +31,7 @@ export default {
   display: flex;
   justify-content: center;
   padding: 20px;
-  background-color: #f2f2f2; 
+  background-color: #f2f2f2;
 }
 
 .search-input {
@@ -42,11 +43,31 @@ export default {
 
 .search-button {
   padding: 8px 12px;
-  background-color: #f76c6c; 
+  background-color: #f76c6c;
   color: white;
 }
 
 .search-button:hover {
   background-color: #e55e5e;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  cursor: pointer;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+li:hover {
+  background-color: #f76c6c;
+  color: white;
+}
+
+img {
+  padding: 20px;
 }
 </style>

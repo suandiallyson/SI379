@@ -1,6 +1,15 @@
 <template>
   <div>
-    <SearchBar @search="handleSearch" /> <!-- Use the search bar component -->
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <input
+        v-model="searchQuery"
+        placeholder="Search for recipes..."
+        @keyup.enter="search"
+        class="search-input"
+      />
+      <button @click="search" class="search-button">Search</button>
+    </div>
 
     <!-- Shopping list for selected ingredients -->
     <div v-if="selectedIngredients.length > 0">
@@ -12,22 +21,22 @@
       </ul>
     </div>
 
-    <div v-if="isLoading">Loading recipes...</div> <!-- Loading indicator -->
+    <!-- Loading indicator while fetching recipes -->
+    <div v-if="isLoading">Loading recipes...</div> 
 
+    <!-- Display the list of recipes -->
     <div v-else>
       <ul>
-        <!-- Display list of recipes -->
         <li v-for="recipe in recipes" :key="recipe.id">
-          <strong @click="toggleInstructions(recipe.id)"> <!-- Click to toggle instructions -->
+          <strong @click="toggleInstructions(recipe.id)">
             {{ recipe.title }}
           </strong>
 
-          <!-- Display instructions in a dropdown when clicked -->
+          <!-- Toggle instructions when clicked -->
           <div v-if="recipe.showInstructions">
             <img :src="recipe.image" alt="Recipe Image" style="width: 200px; height: 200px;" />
             <h3>Ingredients:</h3>
             <ul>
-              <!-- Display ingredients with checkboxes -->
               <li
                 v-for="ingredient in recipe.nutrition.ingredients"
                 :key="ingredient.id"
@@ -43,7 +52,7 @@
               </li>
             </ul>
 
-            <!-- Display recipe instructions -->
+            <!-- Recipe instructions -->
             <ol>
               <li v-for="step in recipe.instructions" :key="step.number">
                 <strong>Step {{ step.number }}:</strong> {{ step.step }}
@@ -57,37 +66,35 @@
 </template>
 
 <script>
-import { queryRecipes, getRecipeInformation } from '@/services/RecipeService'; // Import services
-import SearchBar from './SearchBar.vue'; // Import the search bar component
+import { queryRecipes, getRecipeInformation } from '@/services/RecipeService'; 
 
 export default {
-  components: {
-    SearchBar, // Register the search bar component
-  },
   data() {
     return {
-      recipes: [], // Store fetched recipes
+      searchQuery: '', // Search term
+      recipes: [], // List of fetched recipes
       isLoading: false, // Loading state
-      selectedIngredients: [], // List of selected ingredients
+      selectedIngredients: [], // Shopping list items
     };
   },
   methods: {
-    // Handle search to fetch recipes based on query
+    search() {
+      this.handleSearch(this.searchQuery); // Initiate a search with the current query
+    },
+    
+    // Fetch recipes based on search query
     async handleSearch(query) {
       this.isLoading = true; // Start loading state
-      this.recipes = []; // Clear previous recipes
+      this.recipes = []; // Clear previous list
 
       try {
-        // Fetch recipes based on the search query
-        const response = await queryRecipes({ query }); // Pass the search query
-        
-        // Populate the recipes list with fetched results
+        const response = await queryRecipes({ query }); // Fetch recipes
         this.recipes = response.data.results.map((recipe) => ({
           ...recipe,
           showInstructions: false, // Initially hide instructions
         }));
       } catch (error) {
-        console.error('Error fetching recipes:', error); // Log any errors
+        console.error('Error fetching recipes:', error);
       } finally {
         this.isLoading = false; // End loading state
       }
@@ -98,30 +105,25 @@ export default {
       const recipe = this.recipes.find((r) => r.id === recipeId);
 
       if (recipe.showInstructions) {
-        // If instructions are visible, hide them
-        recipe.showInstructions = false;
+        recipe.showInstructions = false; // Hide instructions
       } else {
         try {
-          // Fetch recipe information to get the instructions
-          const response = await getRecipeInformation(recipeId);
-          
-          recipe.showInstructions = true; // Toggle instructions on
-          recipe.instructions = response.data.analyzedInstructions[0]?.steps || []; // Extract steps
+          const response = await getRecipeInformation(recipeId); // Fetch instructions
+          recipe.showInstructions = true; // Show instructions
+          recipe.instructions = response.data.analyzedInstructions[0]?.steps || [];
         } catch (error) {
-          console.error('Error fetching recipe instructions:', error); // Handle errors
+          console.error('Error fetching recipe instructions:', error);
         }
       }
     },
 
     // Toggle ingredient selection for shopping list
     toggleIngredient(ingredient) {
-      const index = this.selectedIngredients.findIndex(
-        (i) => i.id === ingredient.id
-      );
+      const index = this.selectedIngredients.findIndex((i) => i.id === ingredient.id);
       if (index === -1) {
         this.selectedIngredients.push(ingredient);
       } else {
-        this.selectedIngredients.splice(index, 1);
+        this.selectedIngredients.splice(index, 1); // Deselect if already in the list
       }
     },
   },
@@ -129,6 +131,30 @@ export default {
 </script>
 
 <style scoped>
+.search-bar {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background-color: #f2f2f2;
+}
+
+.search-input {
+  padding: 12px;
+  border-radius: 15px;
+  width: 300px;
+  margin-right: 20px;
+}
+
+.search-button {
+  padding: 8px 12px;
+  background-color: #f76c6c;
+  color: white;
+}
+
+.search-button:hover {
+  background-color: #e55e5e;
+}
+
 ul {
   list-style-type: none;
   padding: 0;
@@ -149,23 +175,3 @@ img {
   padding: 20px;
 }
 </style>
-
-
-
-
-<!-- <template>
-    <div>
-      <ul>
-        <li v-for="recipe in recipes" :key="recipe.id">
-          {{ recipe.title }}
-        </li>
-      </ul>
-    </div>
-  </template>
-  
-  <script>
-  export default {
-    props: ['recipes'],
-  };
-  </script> -->
-  
